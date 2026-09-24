@@ -419,8 +419,8 @@ export default function App() {
         <div className={`dashboard-grid ${isPortrait ? 'portrait-layout' : 'landscape-layout'}`}>
           <div className="hero-card">
             <div className="hero-title">
-              <h1>Manufacturing Engineering</h1>
-              <h2>DATA TRACKER</h2>
+              <h1>RAZIN</h1>
+              <h2>*R*oot Cause *A*nalysis & *Z*ero *I*ssue Resolution *N*etwork</h2>
             </div>
 
             <div className="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
