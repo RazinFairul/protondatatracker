@@ -120,40 +120,39 @@ export default function App() {
         <div className={`dashboard-grid ${isPortrait ? 'portrait-layout' : 'landscape-layout'}`}>
           <div className="hero-card">
             <div className="hero-title">
-              <h1 style={{ letterSpacing: '4px', marginBottom: '14px', fontSize: '26px' }}>R.A.Z.I.N</h1>
+              <h1 style={{ letterSpacing: '4px', marginBottom: '12px', fontSize: '28px' }}>R.A.Z.I.N</h1>
               
-              {/* Susunan Akronim Sebaris & Highlight Huruf Awal */}
+              {/* Susunan Huruf Akronim Tebal & Besar */}
               <div 
                 style={{ 
                   display: 'flex', 
                   flexDirection: 'column', 
                   gap: '4px', 
-                  fontSize: '13px', 
-                  fontWeight: 'bold',
                   textAlign: 'left',
                   margin: '0 auto',
-                  maxWidth: '220px'
+                  maxWidth: '220px',
+                  color: '#ffffff'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <span style={{ color: '#facc15', fontSize: '17px', width: '22px', fontWeight: '900', textShadow: '0 0 6px rgba(250, 204, 21, 0.6)' }}>R</span>
-                  <span style={{ color: '#ffffff', letterSpacing: '0.5px' }}>oot Cause</span>
+                <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                  <span style={{ fontSize: '22px', fontWeight: '900', width: '22px', display: 'inline-block' }}>R</span>
+                  <span style={{ fontSize: '15px', fontWeight: '600' }}>oot Cause</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <span style={{ color: '#facc15', fontSize: '17px', width: '22px', fontWeight: '900', textShadow: '0 0 6px rgba(250, 204, 21, 0.6)' }}>A</span>
-                  <span style={{ color: '#ffffff', letterSpacing: '0.5px' }}>nalysis</span>
+                <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                  <span style={{ fontSize: '22px', fontWeight: '900', width: '22px', display: 'inline-block' }}>A</span>
+                  <span style={{ fontSize: '15px', fontWeight: '600' }}>nalysis</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <span style={{ color: '#facc15', fontSize: '17px', width: '22px', fontWeight: '900', textShadow: '0 0 6px rgba(250, 204, 21, 0.6)' }}>Z</span>
-                  <span style={{ color: '#ffffff', letterSpacing: '0.5px' }}>ero</span>
+                <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                  <span style={{ fontSize: '22px', fontWeight: '900', width: '22px', display: 'inline-block' }}>Z</span>
+                  <span style={{ fontSize: '15px', fontWeight: '600' }}>ero</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <span style={{ color: '#facc15', fontSize: '17px', width: '22px', fontWeight: '900', textShadow: '0 0 6px rgba(250, 204, 21, 0.6)' }}>I</span>
-                  <span style={{ color: '#ffffff', letterSpacing: '0.5px' }}>ssue Resolution</span>
+                <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                  <span style={{ fontSize: '22px', fontWeight: '900', width: '22px', display: 'inline-block' }}>I</span>
+                  <span style={{ fontSize: '15px', fontWeight: '600' }}>ssue Resolution</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <span style={{ color: '#facc15', fontSize: '17px', width: '22px', fontWeight: '900', textShadow: '0 0 6px rgba(250, 204, 21, 0.6)' }}>N</span>
-                  <span style={{ color: '#ffffff', letterSpacing: '0.5px' }}>etwork</span>
+                <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                  <span style={{ fontSize: '22px', fontWeight: '900', width: '22px', display: 'inline-block' }}>N</span>
+                  <span style={{ fontSize: '15px', fontWeight: '600' }}>etwork</span>
                 </div>
               </div>
             </div>
