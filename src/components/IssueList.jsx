@@ -20,13 +20,12 @@ const DEFAULT_STAGES = {
 export default function IssueList({ onBackToDashboard, refreshTrigger }) {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null);
 
   // Dynamic Master Data
   const [dbStations, setDbStations] = useState([]);
   const [dbVariants, setDbVariants] = useState([]);
 
-  // Filters: Date - Status - Class - Group - Location - Engine Variant - Name
+  // Filters: Date - Status - Class - Group - Location - Variant - Name
   const [searchTerm, setSearchTerm] = useState('');
   const [periodFilter, setPeriodFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -61,19 +60,6 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
       window.history.replaceState(null, '', cleanUrl);
     }
   };
-
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setCurrentUser(session.user);
-      } else {
-        const { data: { user } } = await supabase.auth.getUser();
-        setCurrentUser(user);
-      }
-    };
-    getCurrentUser();
-  }, []);
 
   const fetchMasterData = async () => {
     try {
@@ -198,33 +184,12 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
     return Array.from(new Set(issues.map((i) => i.staff_name || i.staff_id).filter(Boolean))).sort();
   }, [issues]);
 
-  // Only the original reporter is authorized to edit or delete
-  const checkCanEdit = (issue) => {
-    if (!currentUser || !issue) return false;
-
-    const currentUserName = (
-      currentUser?.user_metadata?.full_name ||
-      currentUser?.user_metadata?.name ||
-      currentUser?.email?.split('@')[0] ||
-      ''
-    ).toLowerCase().trim();
-
-    const currentUserEmail = (currentUser?.email || '').toLowerCase().trim();
-
-    const isReporter =
-      (issue.user_id && String(issue.user_id) === String(currentUser.id)) ||
-      (issue.user_email && issue.user_email.toLowerCase().trim() === currentUserEmail) ||
-      (issue.staff_name && currentUserName && issue.staff_name.trim().toLowerCase() === currentUserName);
-
-    return Boolean(isReporter);
+  // Tiada sekatan login: Semua pengguna dibenarkan mengedit / memadam
+  const checkCanEdit = () => {
+    return true;
   };
 
   const handleDeleteIssue = async (issue) => {
-    if (!checkCanEdit(issue)) {
-      alert('Unauthorized: Only the original reporter can delete this issue.');
-      return;
-    }
-
     const confirmDelete = window.confirm(`Are you sure you want to delete "${issue.what_issue || 'this issue'}"?`);
     if (!confirmDelete) return;
 
@@ -338,7 +303,6 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
     setRootCause(matrix.root_cause || issue.root_cause || '');
     setCountermeasure(matrix.countermeasure || issue.countermeasure || '');
 
-    // Stage 1/4 is always empty for written action notes
     const s2_progress = matrix['2/4']?.progress || '';
     const s2_remark = matrix['2/4']?.remark || '';
     const s2_links = matrix['2/4']?.links || [];
@@ -373,7 +337,6 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
 
     setActiveStageTab(targetStage);
 
-    // Auto-forward only if target stage is empty and status is not 1/4
     setStageDetails((prev) => {
       if (newStatus === 'In Progress (1/4)') return prev;
 
@@ -396,14 +359,8 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
   };
 
   const handleOpenUpdateModal = (issue) => {
-    if (!checkCanEdit(issue)) {
-      alert('View only: Only the original reporter can update this issue.');
-      return;
-    }
-
     setSelectedIssue(issue);
     setTempLinkInput('');
-
     loadOriginalIssueData(issue);
 
     const savedDraftRaw = localStorage.getItem(`draft_update_${issue.id}`);
@@ -441,7 +398,7 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
 
   // Deep Link Auto-Opener
   useEffect(() => {
-    if (loading || !currentUser || !issues || issues.length === 0 || deepLinkProcessedRef.current) return;
+    if (loading || !issues || issues.length === 0 || deepLinkProcessedRef.current) return;
 
     const searchParams = new URLSearchParams(window.location.search);
     const targetId = searchParams.get('issueId') || localStorage.getItem('open_issue_id');
@@ -461,25 +418,9 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
       setEngineVariantFilter('All');
       setNameFilter('All');
 
-      if (checkCanEdit(targetIssue)) {
-        handleOpenUpdateModal(targetIssue);
-      } else {
-        setTimeout(() => {
-          const cardElement = document.getElementById(`issue-card-${targetIssue.id}`);
-          if (cardElement) {
-            cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            cardElement.style.transition = 'box-shadow 0.5s ease, border-color 0.5s ease';
-            cardElement.style.borderColor = '#0d3b66';
-            cardElement.style.boxShadow = '0 0 16px rgba(13, 59, 102, 0.5)';
-            setTimeout(() => {
-              cardElement.style.borderColor = '#e0e0e0';
-              cardElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
-            }, 4500);
-          }
-        }, 400);
-      }
+      handleOpenUpdateModal(targetIssue);
     }
-  }, [issues, currentUser, loading]);
+  }, [issues, loading]);
 
   const maxUnlockedLevel = useMemo(() => {
     return STAGE_ORDER[modalStatus] || 1;
@@ -553,11 +494,6 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
 
   const handleSaveProgressMatrix = async (e) => {
     e.preventDefault();
-    if (!checkCanEdit(selectedIssue)) {
-      alert('Unauthorized operation. Only the reporter can save changes.');
-      return;
-    }
-
     setUpdating(true);
     const now = new Date().toISOString();
 
@@ -747,7 +683,7 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
         'Issue Description': i.description || '-',
         'Group': i.group_name || '-',
         'Location / Station': i.location || '-',
-        'Engine Variant': i.engine_variant || '-',
+        'Variant': i.engine_variant || '-',
         'Person in Charge': i.pic_name || i.pic || '-',
         'Root Cause': pMatrix.root_cause || '-',
         'Countermeasure': pMatrix.countermeasure || '-',
@@ -991,10 +927,10 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
             </select>
           </div>
 
-          {/* 6. Engine Variant */}
+          {/* 6. Variant */}
           <div style={{ minWidth: '0' }}>
             <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#444', display: 'block', marginBottom: '4px', whiteSpace: 'nowrap' }}>
-              ⚙️ Engine Variant:
+              ⚙️ Variant:
             </label>
             <select
               value={engineVariantFilter}
@@ -1038,7 +974,6 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
           {filteredIssues.map((issue) => {
             const statusInfo = getStatusDetails(issue.status);
             const manualDate = issue.date_time || issue.created_at;
-            const isReporterOnly = checkCanEdit(issue);
             const matrix = issue.progress_matrix || {};
 
             const curStatus = issue.status || 'In Progress (1/4)';
@@ -1102,7 +1037,7 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
                     <div>👥 <b>Group:</b> {issue.group_name || '-'}</div>
                     <div>👤 <b>Name:</b> {issue.staff_name || issue.staff_id || '-'}</div>
                     <div>📍 <b>Location:</b> {issue.location || '-'}</div>
-                    <div>⚙️ <b>Engine Variant:</b> {issue.engine_variant || '-'}</div>
+                    <div>⚙️ <b>Variant:</b> {issue.engine_variant || '-'}</div>
                     <div>👤 <b>PIC:</b> {issue.pic_name || issue.pic || '-'}</div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
@@ -1134,18 +1069,16 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
                           <span style={{ fontWeight: 'bold', color: '#0d3b66' }}>
                             {formatDateOnly(issue.estimated_closing)}
                           </span>
-                          {isReporterOnly && (
-                            <button
-                              onClick={() => {
-                                setEditingEstClosingId(issue.id);
-                                setNewEstClosingDate(issue.estimated_closing ? issue.estimated_closing.split('T')[0].split(' ')[0] : '');
-                              }}
-                              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', padding: '0 2px' }}
-                              title="Edit Est. Closing Date"
-                            >
-                              ✏️
-                            </button>
-                          )}
+                          <button
+                            onClick={() => {
+                              setEditingEstClosingId(issue.id);
+                              setNewEstClosingDate(issue.estimated_closing ? issue.estimated_closing.split('T')[0].split(' ')[0] : '');
+                            }}
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', padding: '0 2px' }}
+                            title="Edit Est. Closing Date"
+                          >
+                            ✏️
+                          </button>
                         </div>
                       )}
                     </div>
@@ -1222,27 +1155,19 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
                       </a>
                     )}
 
-                    {isReporterOnly ? (
-                      <>
-                        <button
-                          onClick={() => handleOpenUpdateModal(issue)}
-                          style={{ border: 'none', backgroundColor: '#e9ecef', cursor: 'pointer', padding: '5px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', color: '#333' }}
-                        >
-                          ✏️ Update
-                        </button>
+                    <button
+                      onClick={() => handleOpenUpdateModal(issue)}
+                      style={{ border: 'none', backgroundColor: '#e9ecef', cursor: 'pointer', padding: '5px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', color: '#333' }}
+                    >
+                      ✏️ Update
+                    </button>
 
-                        <button
-                          onClick={() => handleDeleteIssue(issue)}
-                          style={{ border: 'none', backgroundColor: '#dc3545', color: '#fff', cursor: 'pointer', padding: '5px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}
-                        >
-                          🗑️ Delete
-                        </button>
-                      </>
-                    ) : (
-                      <span style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>
-                        View only
-                      </span>
-                    )}
+                    <button
+                      onClick={() => handleDeleteIssue(issue)}
+                      style={{ border: 'none', backgroundColor: '#dc3545', color: '#fff', cursor: 'pointer', padding: '5px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}
+                    >
+                      🗑️ Delete
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1312,14 +1237,6 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
                   <option value="In Progress (3/4)">◕ In Progress (3/4)</option>
                   <option value="Closed (4/4)">⚫ Closed (4/4)</option>
                 </select>
-                <small style={{ color: '#64748b', display: 'block', marginTop: '4px' }}>
-                  {modalStatus === 'In Progress (1/4)' && (
-                    '*Stage 1/4 marks a newly registered issue. Select 2/4 or above to start entering action progress.'
-                  )}
-                  {modalStatus !== 'In Progress (1/4)' && modalStatus !== 'Closed (4/4)' && (
-                    '*Advancing the status unlocks the respective stage tab and automatically carries forward previous notes.'
-                  )}
-                </small>
               </div>
 
               {/* 1. Root Cause & Countermeasure */}
@@ -1395,7 +1312,6 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
                     {activeStageTab === '4/4' ? 'Action & Verification for Closed (4/4):' : `Progress & Remark for In Progress ${activeStageTab}:`}
                   </span>
 
-                  {/* Manual Forward Button */}
                   {activeStageTab !== '2/4' && (
                     <button
                       type="button"
@@ -1468,7 +1384,6 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
                     </button>
                   </div>
 
-                  {/* List of Links */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {(stageDetails[activeStageTab]?.links || []).map((lnk, idx) => (
                       <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', padding: '4px 8px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
