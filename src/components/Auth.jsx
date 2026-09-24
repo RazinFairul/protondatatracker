@@ -11,7 +11,6 @@ export default function Auth({ onLoginSuccess, forceRecoveryMode = false, onPass
   const [staffId, setStaffId] = useState('');
   const [password, setPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [departmentCode, setDepartmentCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -78,11 +77,6 @@ export default function Auth({ onLoginSuccess, forceRecoveryMode = false, onPass
 
       // 3. Mod Sign Up
       if (authMode === 'signup') {
-        if (departmentCode.trim().toUpperCase() !== 'ME') {
-          setErrorMessage('Invalid Department Code!');
-          return;
-        }
-
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password: password,
@@ -90,7 +84,6 @@ export default function Auth({ onLoginSuccess, forceRecoveryMode = false, onPass
             data: {
               full_name: name.trim(),
               staff_id: staffId.trim().toUpperCase(),
-              department_code: 'ME',
             },
           },
         });
@@ -104,7 +97,6 @@ export default function Auth({ onLoginSuccess, forceRecoveryMode = false, onPass
           setAuthMode('login');
           setPassword('');
           setStaffId('');
-          setDepartmentCode('');
         }
         return;
       }
@@ -204,7 +196,7 @@ export default function Auth({ onLoginSuccess, forceRecoveryMode = false, onPass
           </div>
         )}
 
-        {/* Full Name & Staff ID (Sign Up ) */}
+        {/* Full Name & Staff ID (Sign Up) */}
         {authMode === 'signup' && (
           <>
             <div>
@@ -305,7 +297,7 @@ export default function Auth({ onLoginSuccess, forceRecoveryMode = false, onPass
               >
                 {showPassword ? (
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z" />
                     <circle cx="12" cy="12" r="3" />
                   </svg>
                 ) : (
@@ -340,26 +332,6 @@ export default function Auth({ onLoginSuccess, forceRecoveryMode = false, onPass
                 fontSize: '13px',
               }}
             />
-          </div>
-        )}
-
-        {/* Department Code (Sign Up Sahaja) */}
-        {authMode === 'signup' && (
-          <div>
-            <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#333', display: 'block', marginBottom: '4px' }}>
-              Department Code:
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Enter Department Code"
-              value={departmentCode}
-              onChange={(e) => setDepartmentCode(e.target.value)}
-              style={{ width: '100%', padding: '9px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
-            />
-            <small style={{ color: '#666', fontSize: '11px', display: 'block', marginTop: '3px' }}>
-              *Enter the code to verify department registration access.
-            </small>
           </div>
         )}
 
