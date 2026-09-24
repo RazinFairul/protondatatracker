@@ -4,7 +4,7 @@ import imageCompression from 'browser-image-compression';
 
 const DRAFT_STORAGE_KEY = 'draft_create_new_issue';
 
-export default function CreateIssue({ onBackToDashboard, onIssueCreated }) {
+export default function CreateIssue({ userProfile, onBackToDashboard, onIssueCreated }) {
   const [whatIssue, setWhatIssue] = useState('');
   const [description, setDescription] = useState('');
   const [groupName, setGroupName] = useState('');
@@ -31,7 +31,7 @@ export default function CreateIssue({ onBackToDashboard, onIssueCreated }) {
   const [stationToDelete, setStationToDelete] = useState('');
   const [stationLoading, setStationLoading] = useState(false);
 
-  // Dynamic engine variants state
+  // Dynamic variants state
   const [variantList, setVariantList] = useState([]);
   const [variantMode, setVariantMode] = useState('select'); // 'select' | 'add' | 'delete'
   const [newVariantName, setNewVariantName] = useState('');
@@ -165,7 +165,7 @@ export default function CreateIssue({ onBackToDashboard, onIssueCreated }) {
     fetchStations();
   }, [groupName]);
 
-  // Fetch engine variants from Supabase table on load
+  // Fetch variants from Supabase table on load
   useEffect(() => {
     const fetchVariants = async () => {
       setVariantLoading(true);
@@ -182,7 +182,7 @@ export default function CreateIssue({ onBackToDashboard, onIssueCreated }) {
           setVariantList([]);
         }
       } catch (err) {
-        console.error('Failed to fetch engine variants:', err);
+        console.error('Failed to fetch variants:', err);
         setVariantList([]);
       } finally {
         setVariantLoading(false);
@@ -268,16 +268,16 @@ export default function CreateIssue({ onBackToDashboard, onIssueCreated }) {
     setStationLoading(false);
   };
 
-  // Add new engine variant to Supabase
+  // Add new variant to Supabase
   const handleAddNewVariant = async () => {
     const trimmed = newVariantName.trim().toUpperCase();
     if (!trimmed) {
-      alert('Please enter an engine variant name.');
+      alert('Please enter a variant name.');
       return;
     }
 
     if (variantList.includes(trimmed)) {
-      alert('This engine variant already exists in the list.');
+      alert('This variant already exists in the list.');
       return;
     }
 
@@ -287,7 +287,7 @@ export default function CreateIssue({ onBackToDashboard, onIssueCreated }) {
     ]);
 
     if (error) {
-      alert('Failed to add engine variant: ' + error.message);
+      alert('Failed to add variant: ' + error.message);
     } else {
       const updated = [...variantList, trimmed].sort();
       setVariantList(updated);
@@ -298,15 +298,15 @@ export default function CreateIssue({ onBackToDashboard, onIssueCreated }) {
     setVariantLoading(false);
   };
 
-  // Delete engine variant from Supabase
+  // Delete variant from Supabase
   const handleDeleteVariant = async () => {
     if (!variantToDelete) {
-      alert('Please select an engine variant to delete.');
+      alert('Please select a variant to delete.');
       return;
     }
 
     const confirmDelete = window.confirm(
-      `Are you sure you want to permanently delete engine variant "${variantToDelete}"?`
+      `Are you sure you want to permanently delete variant "${variantToDelete}"?`
     );
     if (!confirmDelete) return;
 
@@ -317,7 +317,7 @@ export default function CreateIssue({ onBackToDashboard, onIssueCreated }) {
       .eq('variant_name', variantToDelete);
 
     if (error) {
-      alert('Failed to delete engine variant: ' + error.message);
+      alert('Failed to delete variant: ' + error.message);
     } else {
       const updated = variantList.filter((v) => v !== variantToDelete);
       setVariantList(updated);
@@ -326,7 +326,7 @@ export default function CreateIssue({ onBackToDashboard, onIssueCreated }) {
       }
       setVariantToDelete('');
       setVariantMode('select');
-      alert(`Engine variant "${variantToDelete}" has been deleted.`);
+      alert(`Variant "${variantToDelete}" has been deleted.`);
     }
     setVariantLoading(false);
   };
@@ -402,19 +402,10 @@ export default function CreateIssue({ onBackToDashboard, onIssueCreated }) {
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        throw new Error('You must be logged in to create an issue.');
-      }
-
-      const autoStaffName =
-        user?.user_metadata?.full_name ||
-        user?.user_metadata?.name ||
-        user?.email?.split('@')[0] ||
-        'Staff';
-
-      const staffEmail = user?.email || null;
+      // Gunakan maklumat daripada userProfile atau tetapkan nilai lalai staff
+      const autoStaffName = userProfile?.full_name || pic || 'Staff';
+      const staffEmail = 'staff@proton.com';
+      const staffIdVal = userProfile?.staff_id || 'STAFF-ME';
       let fileUrl = null;
 
       if (file) {
@@ -465,12 +456,12 @@ export default function CreateIssue({ onBackToDashboard, onIssueCreated }) {
           classification: classification,
           estimated_closing: estimatedClosing,
           staff_name: autoStaffName,
-          staff_id: user?.user_metadata?.staff_id || null,
+          staff_id: staffIdVal,
           file_url: fileUrl,
           onedrive_link: linkList.length > 0 ? linkList[0] : null,
           progress_matrix: initialProgressMatrix,
-          user_id: user.id,
-          user_email: user.email,
+          user_id: null,
+          user_email: staffEmail,
           status: 'In Progress (1/4)',
         },
       ]);
@@ -756,10 +747,10 @@ export default function CreateIssue({ onBackToDashboard, onIssueCreated }) {
           )}
         </div>
 
-        {/* Engine Variant Field */}
+        {/* Variant Field */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-            <label style={{ fontWeight: 'bold' }}>Engine Variant:</label>
+            <label style={{ fontWeight: 'bold' }}>Variant:</label>
             <div style={{ display: 'flex', gap: '10px' }}>
               {variantMode !== 'select' ? (
                 <button
@@ -916,8 +907,8 @@ export default function CreateIssue({ onBackToDashboard, onIssueCreated }) {
             >
               <option value="">
                 {variantLoading
-                  ? 'Loading engine variants...'
-                  : `-- Select Engine Variant (${variantList.length} available) --`}
+                  ? 'Loading variants...'
+                  : `-- Select Variant (${variantList.length} available) --`}
               </option>
               {variantList.map((v) => (
                 <option key={v} value={v} style={{ color: '#000' }}>
