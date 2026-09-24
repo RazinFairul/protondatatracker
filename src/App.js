@@ -5,12 +5,12 @@ import IssueList from './components/IssueList';
 import TagMapUpdates from './components/TagMap';
 import DashboardAnalytics from './components/DashboardAnalytics';
 
-// Profil default supaya komponen CreateIssue & IssueList berfungsi lancar tanpa ralat user
+// Profil default yang dipaparkan di skrin
 const DEFAULT_USER_PROFILE = {
   id: '00000000-0000-0000-0000-000000000000',
   department: 'ME',
-  staff_id: 'STAFF-ME',
-  full_name: 'Proton Staff',
+  staff_id: 'Proton ID',
+  full_name: 'Proton',
   avatar_url: null,
 };
 
@@ -48,7 +48,7 @@ export default function App() {
     }
   }, []);
 
-  // URL Hash Navigation (Terus halakan ke tab yang sah tanpa semakan login)
+  // URL Hash Navigation
   useEffect(() => {
     const handleHashChange = () => {
       const searchParams = new URLSearchParams(window.location.search);
@@ -120,11 +120,28 @@ export default function App() {
         <div className={`dashboard-grid ${isPortrait ? 'portrait-layout' : 'landscape-layout'}`}>
           <div className="hero-card">
             <div className="hero-title">
-              <h1>RAZIN</h1>
-              <h2>*R*oot Cause *A*nalysis & *Z*ero *I*ssue Resolution *N*etwork</h2>
+              <h1 style={{ letterSpacing: '3px', marginBottom: '8px' }}>R.A.Z.I.N</h1>
+              <div 
+                style={{ 
+                  fontSize: '13px', 
+                  fontWeight: 'bold', 
+                  lineHeight: '1.6', 
+                  color: '#f8fafc',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '2px',
+                  marginTop: '6px'
+                }}
+              >
+                <div>Root Cause</div>
+                <div>Analysis</div>
+                <div>Zero</div>
+                <div>Issue Resolution</div>
+                <div>Network</div>
+              </div>
             </div>
 
-            <div className="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div className="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '16px' }}>
               <div 
                 className="avatar" 
                 style={{ 
@@ -145,8 +162,12 @@ export default function App() {
 
               <div className="welcome-text">
                 <div className="welcome-title">Welcome to</div>
-                <div className="user-name">{DEFAULT_USER_PROFILE.full_name}</div>
-                <div className="staff-id-text">({DEFAULT_USER_PROFILE.staff_id})</div>
+                <div className="user-name" style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff' }}>
+                  {DEFAULT_USER_PROFILE.full_name}
+                </div>
+                <div className="staff-id-text" style={{ fontSize: '13px', color: '#cbd5e1' }}>
+                  ({DEFAULT_USER_PROFILE.staff_id})
+                </div>
               </div>
             </div>
           </div>
