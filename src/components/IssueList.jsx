@@ -4,16 +4,12 @@ import { supabase } from '../supabaseClient';
 
 const STAGE_ORDER = {
   'In Progress (1/4)': 1,
-  'In Progress (2/4)': 2,
-  'In Progress (3/4)': 3,
   'Closed (4/4)': 4,
   'Closed': 4
 };
 
 const DEFAULT_STAGES = {
   '1/4': { progress: '', remark: '', links: [] },
-  '2/4': { progress: '', remark: '', links: [] },
-  '3/4': { progress: '', remark: '', links: [] },
   '4/4': { progress: '', remark: '', links: [] }
 };
 
@@ -40,13 +36,12 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
   const [newEstClosingDate, setNewEstClosingDate] = useState('');
   const [savingEstDate, setSavingEstDate] = useState(false);
 
-  // Update Modal State
+  // Update Modal State (1/4 dan 4/4 sahaja)
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [modalStatus, setModalStatus] = useState('In Progress (1/4)');
   const [rootCause, setRootCause] = useState('');
   const [countermeasure, setCountermeasure] = useState('');
   const [stageDetails, setStageDetails] = useState(DEFAULT_STAGES);
-  const [activeStageTab, setActiveStageTab] = useState('2/4');
   const [tempLinkInput, setTempLinkInput] = useState('');
   const [updating, setUpdating] = useState(false);
   const [hasRestoredModalDraft, setHasRestoredModalDraft] = useState(false);
@@ -107,12 +102,11 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
       modalStatus,
       rootCause,
       countermeasure,
-      stageDetails,
-      activeStageTab
+      stageDetails
     };
 
     localStorage.setItem(`draft_update_${selectedIssue.id}`, JSON.stringify(draftPayload));
-  }, [selectedIssue, modalStatus, rootCause, countermeasure, stageDetails, activeStageTab]);
+  }, [selectedIssue, modalStatus, rootCause, countermeasure, stageDetails]);
 
   const handleGroupFilterChange = (e) => {
     setGroupFilter(e.target.value);
@@ -181,13 +175,8 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
   }, [dbVariants, issues]);
 
   const uniqueNames = useMemo(() => {
-    return Array.from(new Set(issues.map((i) => i.staff_name || i.staff_id).filter(Boolean))).sort();
-  }, [issues]);
-
-  // Tiada sekatan login: Semua pengguna dibenarkan mengedit / memadam
-  const checkCanEdit = () => {
-    return true;
-  };
+    return ['Proton'];
+  }, []);
 
   const handleDeleteIssue = async (issue) => {
     const confirmDelete = window.confirm(`Are you sure you want to delete "${issue.what_issue || 'this issue'}"?`);
@@ -273,17 +262,12 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
 
   const getStatusDetails = (status) => {
     switch (status) {
-      case 'In Progress (1/4)':
-        return { icon: '◔', text: 'In Progress (1/4)', bg: '#ea580c', color: '#fff' };
-      case 'In Progress (2/4)':
-        return { icon: '◑', text: 'In Progress (2/4)', bg: '#eab308', color: '#000' };
-      case 'In Progress (3/4)':
-        return { icon: '◕', text: 'In Progress (3/4)', bg: '#0284c7', color: '#fff' };
       case 'Closed':
       case 'Closed (4/4)':
       case 'Completed':
       case 'Complete':
         return { icon: '⚫', text: 'Closed (4/4)', bg: '#16a34a', color: '#fff' };
+      case 'In Progress (1/4)':
       default:
         return { icon: '◔', text: 'In Progress (1/4)', bg: '#ea580c', color: '#fff' };
     }
@@ -292,9 +276,10 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
   // Load issue data into modal
   const loadOriginalIssueData = (issue) => {
     let cur = issue.status || 'In Progress (1/4)';
-    if (cur === 'Open') cur = 'In Progress (1/4)';
-    if (cur === 'Completed' || cur === 'Complete' || cur === 'Closed') {
+    if (cur.includes('4/4') || cur === 'Closed' || cur === 'Completed' || cur === 'Complete') {
       cur = 'Closed (4/4)';
+    } else {
+      cur = 'In Progress (1/4)';
     }
     setModalStatus(cur);
 
@@ -303,58 +288,13 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
     setRootCause(matrix.root_cause || issue.root_cause || '');
     setCountermeasure(matrix.countermeasure || issue.countermeasure || '');
 
-    const s2_progress = matrix['2/4']?.progress || '';
-    const s2_remark = matrix['2/4']?.remark || '';
-    const s2_links = matrix['2/4']?.links || [];
-
-    const s3_progress = matrix['3/4']?.progress || '';
-    const s3_remark = matrix['3/4']?.remark || '';
-    const s3_links = matrix['3/4']?.links || [];
-
-    const s4_progress = matrix['4/4']?.progress || '';
+    const s4_progress = matrix['4/4']?.progress || issue.progress_note || '';
     const s4_remark = matrix['4/4']?.remark || '';
     const s4_links = matrix['4/4']?.links || [];
 
     setStageDetails({
       '1/4': { progress: '', remark: '', links: [] },
-      '2/4': { progress: s2_progress, remark: s2_remark, links: s2_links },
-      '3/4': { progress: s3_progress, remark: s3_remark, links: s3_links },
       '4/4': { progress: s4_progress, remark: s4_remark, links: s4_links }
-    });
-
-    let activeStage = '2/4';
-    if (cur.includes('3/4')) activeStage = '3/4';
-    if (cur.includes('4/4')) activeStage = '4/4';
-    setActiveStageTab(activeStage);
-  };
-
-  const handleStatusChange = (newStatus) => {
-    setModalStatus(newStatus);
-
-    let targetStage = '2/4';
-    if (newStatus.includes('3/4')) targetStage = '3/4';
-    else if (newStatus.includes('4/4')) targetStage = '4/4';
-
-    setActiveStageTab(targetStage);
-
-    setStageDetails((prev) => {
-      if (newStatus === 'In Progress (1/4)') return prev;
-
-      const currentTarget = prev[targetStage];
-      const prevStageKey = targetStage === '4/4' ? '3/4' : '2/4';
-      const sourceStage = prev[prevStageKey];
-
-      if ((!currentTarget?.progress || currentTarget.progress.trim() === '') && sourceStage?.progress) {
-        return {
-          ...prev,
-          [targetStage]: {
-            progress: sourceStage.progress,
-            remark: currentTarget?.remark || sourceStage.remark || '',
-            links: (currentTarget?.links && currentTarget.links.length > 0) ? currentTarget.links : [...(sourceStage.links || [])]
-          }
-        };
-      }
-      return prev;
     });
   };
 
@@ -369,10 +309,9 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
         const draft = JSON.parse(savedDraftRaw);
         if (draft.stageDetails) {
           setStageDetails(draft.stageDetails);
-          setModalStatus(draft.modalStatus || issue.status || 'In Progress (1/4)');
+          setModalStatus(draft.modalStatus || 'In Progress (1/4)');
           setRootCause(draft.rootCause ?? '');
           setCountermeasure(draft.countermeasure ?? '');
-          setActiveStageTab(draft.activeStageTab || '2/4');
           setHasRestoredModalDraft(true);
         }
       } catch (err) {
@@ -422,20 +361,11 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
     }
   }, [issues, loading]);
 
-  const maxUnlockedLevel = useMemo(() => {
-    return STAGE_ORDER[modalStatus] || 1;
-  }, [modalStatus]);
-
-  const isStageUnlocked = (stageKey) => {
-    const stageMap = { '2/4': 2, '3/4': 3, '4/4': 4 };
-    return stageMap[stageKey] <= maxUnlockedLevel;
-  };
-
   const handleStageFieldChange = (field, value) => {
     setStageDetails((prev) => ({
       ...prev,
-      [activeStageTab]: {
-        ...prev[activeStageTab],
+      '4/4': {
+        ...prev['4/4'],
         [field]: value
       }
     }));
@@ -451,11 +381,11 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
       return;
     }
 
-    const currentLinks = stageDetails[activeStageTab]?.links || [];
+    const currentLinks = stageDetails['4/4']?.links || [];
     setStageDetails((prev) => ({
       ...prev,
-      [activeStageTab]: {
-        ...prev[activeStageTab],
+      '4/4': {
+        ...prev['4/4'],
         links: [...currentLinks, trimmed]
       }
     }));
@@ -463,31 +393,12 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
   };
 
   const handleRemoveLink = (idxToRemove) => {
-    const currentLinks = stageDetails[activeStageTab]?.links || [];
+    const currentLinks = stageDetails['4/4']?.links || [];
     setStageDetails((prev) => ({
       ...prev,
-      [activeStageTab]: {
-        ...prev[activeStageTab],
+      '4/4': {
+        ...prev['4/4'],
         links: currentLinks.filter((_, idx) => idx !== idxToRemove)
-      }
-    }));
-  };
-
-  const handleCopyFromPrevious = () => {
-    const prevStage = activeStageTab === '4/4' ? '3/4' : '2/4';
-    const sourceData = stageDetails[prevStage];
-
-    if (!sourceData || (!sourceData.progress && !sourceData.remark)) {
-      alert(`No content available in ${prevStage} to forward.`);
-      return;
-    }
-
-    setStageDetails((prev) => ({
-      ...prev,
-      [activeStageTab]: {
-        progress: sourceData.progress || '',
-        remark: sourceData.remark || '',
-        links: [...(sourceData.links || [])]
       }
     }));
   };
@@ -501,12 +412,10 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
       root_cause: rootCause,
       countermeasure: countermeasure,
       '1/4': { progress: '', remark: '', links: [] },
-      '2/4': stageDetails['2/4'],
-      '3/4': stageDetails['3/4'],
       '4/4': stageDetails['4/4']
     };
 
-    const latestNote = stageDetails[activeStageTab]?.progress || selectedIssue.progress_note || '';
+    const latestNote = stageDetails['4/4']?.progress || selectedIssue.progress_note || '';
 
     const { error } = await supabase
       .from('issues')
@@ -541,8 +450,6 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
         (issue.description && issue.description.toLowerCase().includes(searchLower)) ||
         (issue.group_name && issue.group_name.toLowerCase().includes(searchLower)) ||
         (issue.classification && issue.classification.toLowerCase().includes(searchLower)) ||
-        (issue.staff_name && issue.staff_name.toLowerCase().includes(searchLower)) ||
-        (issue.staff_id && issue.staff_id.toLowerCase().includes(searchLower)) ||
         (issue.location && issue.location.toLowerCase().includes(searchLower)) ||
         (issue.engine_variant && issue.engine_variant.toLowerCase().includes(searchLower));
 
@@ -568,12 +475,10 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
         const rawStatus = (issue.status || '').toLowerCase().trim();
         const isClosed = rawStatus === 'closed' || rawStatus.includes('4/4') || rawStatus === 'completed' || rawStatus === 'complete';
 
-        if (statusFilter === 'All In Progress') {
-          matchesStatus = !isClosed;
-        } else if (statusFilter === 'Closed (4/4)') {
+        if (statusFilter === 'Closed (4/4)') {
           matchesStatus = isClosed;
-        } else {
-          matchesStatus = issue.status === statusFilter || (!issue.status && statusFilter === 'In Progress (1/4)');
+        } else if (statusFilter === 'In Progress (1/4)') {
+          matchesStatus = !isClosed;
         }
       }
 
@@ -597,12 +502,6 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
         matchesEngineVariant = issue.engine_variant === engineVariantFilter;
       }
 
-      let matchesName = true;
-      if (nameFilter !== 'All') {
-        const combinedName = issue.staff_name || issue.staff_id;
-        matchesName = combinedName === nameFilter;
-      }
-
       return (
         matchesSearch &&
         matchesPeriod &&
@@ -610,8 +509,7 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
         matchesClassification &&
         matchesGroup &&
         matchesLocation &&
-        matchesEngineVariant &&
-        matchesName
+        matchesEngineVariant
       );
     })
     .sort((a, b) => {
@@ -639,16 +537,7 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
     }
 
     const getHarveyBallStatus = (status) => {
-      if (!status || status === 'Open' || status === 'In Progress (1/4)') {
-        return '◔ In Progress (1/4)';
-      }
-      if (status.includes('2/4')) {
-        return '◑ In Progress (2/4)';
-      }
-      if (status.includes('3/4')) {
-        return '◕ In Progress (3/4)';
-      }
-      if (status.includes('4/4') || status === 'Closed' || status === 'Completed' || status === 'Complete') {
+      if (status && (status.includes('4/4') || status === 'Closed' || status === 'Completed' || status === 'Complete')) {
         return '⚫ Closed (4/4)';
       }
       return '◔ In Progress (1/4)';
@@ -660,22 +549,14 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
       const rawDate = i.date_time || i.created_at;
       const pMatrix = i.progress_matrix || {};
 
-      const progressList = ['2/4', '3/4', '4/4']
-        .filter((stg) => pMatrix[stg]?.progress)
-        .map((stg) => `${stg === '4/4' ? 'Closed 4/4' : `In Progress ${stg}`}: ${pMatrix[stg].progress}`);
-      const formattedProgress = progressList.length > 0 ? progressList.join('\r\n') : '-';
+      const formattedProgress = pMatrix['4/4']?.progress || i.progress_note || '-';
+      const formattedRemarks = pMatrix['4/4']?.remark || '-';
 
-      const remarkList = ['2/4', '3/4', '4/4']
-        .filter((stg) => pMatrix[stg]?.remark)
-        .map((stg) => `${stg === '4/4' ? 'Closed 4/4' : `In Progress ${stg}`}: ${pMatrix[stg].remark}`);
-      const formattedRemarks = remarkList.length > 0 ? remarkList.join('\r\n') : '-';
-
-      const maxLines = Math.max(progressList.length, remarkList.length, 1);
-      rowHeights.push({ hpt: Math.max(22, maxLines * 18) });
+      rowHeights.push({ hpt: 24 });
 
       return {
         'No.': index + 1,
-        'Reported by': i.staff_name || i.staff_id || '-',
+        'Reported by': 'Proton',
         'Date & Time': rawDate ? formatDateTime(rawDate) : '-',
         'Issue Classification': i.classification || '-',
         'Status': getHarveyBallStatus(i.status),
@@ -687,8 +568,8 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
         'Person in Charge': i.pic_name || i.pic || '-',
         'Root Cause': pMatrix.root_cause || '-',
         'Countermeasure': pMatrix.countermeasure || '-',
-        'Progress': formattedProgress,
-        'Remarks': formattedRemarks,
+        'Progress (4/4)': formattedProgress,
+        'Remarks (4/4)': formattedRemarks,
         'Estimate Closing Date': i.estimated_closing ? formatDateOnly(i.estimated_closing) : '-',
         'File Attachment URL': i.file_url || '-',
         'External Link': i.onedrive_link || '-'
@@ -718,7 +599,7 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
 
     worksheet['!cols'] = [
       { wch: 6 },
-      { wch: 22 },
+      { wch: 15 },
       { wch: 22 },
       { wch: 18 },
       { wch: 20 },
@@ -822,7 +703,7 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
           </div>
         </div>
 
-        {/* Row 2: Strict Order */}
+        {/* Row 2: Filters */}
         <div 
           style={{ 
             display: 'grid', 
@@ -866,10 +747,7 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
               style={{ width: '100%', padding: '6px 4px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '11px', backgroundColor: '#fff', boxSizing: 'border-box', cursor: 'pointer' }}
             >
               <option value="All">All Statuses</option>
-              <option value="All In Progress">⏳ All In Progress (1/4 - 3/4)</option>
               <option value="In Progress (1/4)">◔ In Progress (1/4)</option>
-              <option value="In Progress (2/4)">◑ In Progress (2/4)</option>
-              <option value="In Progress (3/4)">◕ In Progress (3/4)</option>
               <option value="Closed (4/4)">⚫ Closed (4/4)</option>
             </select>
           </div>
@@ -975,15 +853,7 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
             const statusInfo = getStatusDetails(issue.status);
             const manualDate = issue.date_time || issue.created_at;
             const matrix = issue.progress_matrix || {};
-
-            const curStatus = issue.status || 'In Progress (1/4)';
-            const maxStageLevel = STAGE_ORDER[curStatus] || 1;
-
-            const stagesToDisplay = [
-              { key: '2/4', level: 2, data: matrix['2/4'], label: 'In Progress 2/4:' },
-              { key: '3/4', level: 3, data: matrix['3/4'], label: 'In Progress 3/4:' },
-              { key: '4/4', level: 4, data: matrix['4/4'], label: 'Closed (4/4):' },
-            ];
+            const isClosed = issue.status && (issue.status.includes('4/4') || issue.status === 'Closed' || issue.status === 'Completed' || issue.status === 'Complete');
 
             return (
               <div
@@ -1035,7 +905,7 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
 
                   <div style={{ fontSize: '12px', color: '#444', display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '12px' }}>
                     <div>👥 <b>Group:</b> {issue.group_name || '-'}</div>
-                    <div>👤 <b>Name:</b> {issue.staff_name || issue.staff_id || '-'}</div>
+                    <div>👤 <b>Name:</b> Proton</div>
                     <div>📍 <b>Location:</b> {issue.location || '-'}</div>
                     <div>⚙️ <b>Variant:</b> {issue.engine_variant || '-'}</div>
                     <div>👤 <b>PIC:</b> {issue.pic_name || issue.pic || '-'}</div>
@@ -1091,36 +961,31 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
                       </div>
                     )}
 
-                    {/* Stage Progress Details */}
-                    {stagesToDisplay.map(({ key, level, data, label }) => {
-                      if (level > maxStageLevel) return null;
-                      if (!data || (!data.progress && !data.remark && (!data.links || data.links.length === 0))) return null;
-
-                      return (
-                        <div key={key} style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', padding: '6px 8px', borderRadius: '4px', marginTop: '4px', fontSize: '11px' }}>
-                          <span style={{ fontWeight: 'bold', color: key === '4/4' ? '#16a34a' : '#0369a1' }}>
-                            {label}
-                          </span>
-                          {data.progress && <div>• <b>Action:</b> {data.progress}</div>}
-                          {data.remark && <div>• <b>Remark:</b> {data.remark}</div>}
-                          {data.links && data.links.length > 0 && (
-                            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '3px' }}>
-                              {data.links.map((lnk, lIdx) => (
-                                <a
-                                  key={lIdx}
-                                  href={lnk}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={{ color: '#2563eb', textDecoration: 'underline', fontSize: '10px' }}
-                                >
-                                  🔗 Link {lIdx + 1}
-                                </a>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                    {/* Stage 4/4 Details */}
+                    {isClosed && matrix['4/4'] && (
+                      <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', padding: '6px 8px', borderRadius: '4px', marginTop: '4px', fontSize: '11px' }}>
+                        <span style={{ fontWeight: 'bold', color: '#16a34a' }}>
+                          Closed (4/4):
+                        </span>
+                        {matrix['4/4'].progress && <div>• <b>Action:</b> {matrix['4/4'].progress}</div>}
+                        {matrix['4/4'].remark && <div>• <b>Remark:</b> {matrix['4/4'].remark}</div>}
+                        {matrix['4/4'].links && matrix['4/4'].links.length > 0 && (
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '3px' }}>
+                            {matrix['4/4'].links.map((lnk, lIdx) => (
+                              <a
+                                key={lIdx}
+                                href={lnk}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: '#2563eb', textDecoration: 'underline', fontSize: '10px' }}
+                              >
+                                🔗 Link {lIdx + 1}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1176,10 +1041,10 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
         </div>
       )}
 
-      {/* Update Progress Modal (Stages 2/4, 3/4 & 4/4) */}
+      {/* Update Progress Modal (1/4 & 4/4 Sahaja) */}
       {selectedIssue && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '15px' }}>
-          <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', width: '100%', maxWidth: '750px', maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 4px 14px rgba(0,0,0,0.25)' }}>
+          <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', width: '100%', maxWidth: '700px', maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 4px 14px rgba(0,0,0,0.25)' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <h3 style={{ margin: 0, color: '#0d3b66', fontSize: '18px' }}>Update Progress & Action Details</h3>
@@ -1225,16 +1090,14 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
               {/* Status Selector */}
               <div style={{ marginBottom: '15px', backgroundColor: '#f1f5f9', padding: '10px', borderRadius: '6px' }}>
                 <label style={{ display: 'block', fontWeight: 'bold', fontSize: '12px', marginBottom: '5px', color: '#0f172a' }}>
-                  Current Closing Status:
+                  Closing Status:
                 </label>
                 <select
                   value={modalStatus}
-                  onChange={(e) => handleStatusChange(e.target.value)}
+                  onChange={(e) => setModalStatus(e.target.value)}
                   style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #0d3b66', fontSize: '13px', backgroundColor: '#fff', fontWeight: 'bold' }}
                 >
                   <option value="In Progress (1/4)">◔ In Progress (1/4)</option>
-                  <option value="In Progress (2/4)">◑ In Progress (2/4)</option>
-                  <option value="In Progress (3/4)">◕ In Progress (3/4)</option>
                   <option value="Closed (4/4)">⚫ Closed (4/4)</option>
                 </select>
               </div>
@@ -1274,136 +1137,85 @@ export default function IssueList({ onBackToDashboard, refreshTrigger }) {
                 </div>
               </div>
 
-              {/* 2. In Progress Tabs (2/4, 3/4 & 4/4) */}
-              <div style={{ display: 'flex', gap: '6px', marginBottom: '12px', borderBottom: '2px solid #e2e8f0', paddingBottom: '6px', flexWrap: 'wrap' }}>
-                {['2/4', '3/4', '4/4'].map((stage) => {
-                  const unlocked = isStageUnlocked(stage);
-                  const isSelected = activeStageTab === stage;
-                  const labelTitle = stage === '4/4' ? 'Closed (4/4)' : `In Progress ${stage}`;
-                  return (
-                    <button
-                      key={stage}
-                      type="button"
-                      disabled={!unlocked}
-                      onClick={() => setActiveStageTab(stage)}
-                      style={{
-                        padding: '6px 12px',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: unlocked ? 'pointer' : 'not-allowed',
-                        fontSize: '12px',
-                        fontWeight: 'bold',
-                        backgroundColor: isSelected ? '#0d3b66' : unlocked ? '#e2e8f0' : '#f1f5f9',
-                        color: isSelected ? '#fff' : unlocked ? '#1e293b' : '#94a3b8',
-                        opacity: unlocked ? 1 : 0.6
-                      }}
-                      title={!unlocked ? `Update status to at least ${stage} to unlock this tab.` : ''}
-                    >
-                      {!unlocked ? '🔒 ' : '✓ '} {labelTitle}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* 3. Progress & Remark Inputs (2/4, 3/4, 4/4) */}
-              <div style={{ border: '1px solid #cbd5e1', borderRadius: '6px', padding: '14px', marginBottom: '15px', backgroundColor: '#f8fafc' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', fontSize: '13px', color: '#0d3b66' }}>
-                    {activeStageTab === '4/4' ? 'Action & Verification for Closed (4/4):' : `Progress & Remark for In Progress ${activeStageTab}:`}
+              {/* 2. Tindakan Closed (4/4) */}
+              {modalStatus === 'Closed (4/4)' && (
+                <div style={{ border: '1px solid #cbd5e1', borderRadius: '6px', padding: '14px', marginBottom: '15px', backgroundColor: '#f8fafc' }}>
+                  <span style={{ fontWeight: 'bold', fontSize: '13px', color: '#0d3b66', display: 'block', marginBottom: '10px' }}>
+                    Action & Verification for Closed (4/4):
                   </span>
 
-                  {activeStageTab !== '2/4' && (
-                    <button
-                      type="button"
-                      onClick={handleCopyFromPrevious}
-                      style={{
-                        backgroundColor: '#e0f2fe',
-                        color: '#0369a1',
-                        border: '1px solid #bae6fd',
-                        borderRadius: '4px',
-                        padding: '4px 8px',
-                        fontSize: '11px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                      }}
-                      title="Copy details from previous stage to edit"
-                    >
-                      ⏩ Forward from {activeStageTab === '4/4' ? '3/4' : '2/4'}
-                    </button>
-                  )}
-                </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '10px', marginBottom: '10px' }}>
+                    <div>
+                      <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '3px' }}>
+                        Final Action / Verification (4/4):
+                      </label>
+                      <textarea
+                        rows="3"
+                        placeholder="Enter final closure action notes..."
+                        value={stageDetails['4/4']?.progress || ''}
+                        onChange={(e) => handleStageFieldChange('progress', e.target.value)}
+                        style={{ width: '100%', padding: '6px', fontSize: '12px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+                      />
+                    </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '10px', marginBottom: '10px' }}>
-                  <div>
-                    <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '3px' }}>
-                      {activeStageTab === '4/4' ? 'Final Action / Verification (4/4):' : `Progress / Action Taken (${activeStageTab}):`}
+                    <div>
+                      <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '3px' }}>
+                        Remark (4/4):
+                      </label>
+                      <textarea
+                        rows="3"
+                        placeholder="Enter final remarks..."
+                        value={stageDetails['4/4']?.remark || ''}
+                        onChange={(e) => handleStageFieldChange('remark', e.target.value)}
+                        style={{ width: '100%', padding: '6px', fontSize: '12px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Multiple Attachment Links */}
+                  <div style={{ marginTop: '12px', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '4px' }}>
+                      🔗 Attachment Links (4/4):
                     </label>
-                    <textarea
-                      rows="3"
-                      placeholder={`Enter notes for stage ${activeStageTab}...`}
-                      value={stageDetails[activeStageTab]?.progress || ''}
-                      onChange={(e) => handleStageFieldChange('progress', e.target.value)}
-                      style={{ width: '100%', padding: '6px', fontSize: '12px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
-                    />
+
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
+                      <input
+                        type="url"
+                        placeholder="Paste Link"
+                        value={tempLinkInput}
+                        onChange={(e) => setTempLinkInput(e.target.value)}
+                        style={{ flex: 1, padding: '6px 8px', fontSize: '12px', borderRadius: '4px', border: '1px solid #ccc' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddLink}
+                        style={{ padding: '6px 12px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+                      >
+                        + Add Link
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {(stageDetails['4/4']?.links || []).map((lnk, idx) => (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', padding: '4px 8px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                          <a href={lnk} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', color: '#2563eb', textDecoration: 'underline', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '85%' }}>
+                            {lnk}
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveLink(idx)}
+                            style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
+                            title="Remove this link"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  <div>
-                    <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '3px' }}>
-                      Remark ({activeStageTab}):
-                    </label>
-                    <textarea
-                      rows="3"
-                      placeholder={`Enter remarks / blockers for stage ${activeStageTab}...`}
-                      value={stageDetails[activeStageTab]?.remark || ''}
-                      onChange={(e) => handleStageFieldChange('remark', e.target.value)}
-                      style={{ width: '100%', padding: '6px', fontSize: '12px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
-                    />
-                  </div>
                 </div>
-
-                {/* Multiple Attachment Links */}
-                <div style={{ marginTop: '12px', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '4px' }}>
-                    🔗 Attachment Links for Stage {activeStageTab}:
-                  </label>
-
-                  <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
-                    <input
-                      type="url"
-                      placeholder="Paste Link"
-                      value={tempLinkInput}
-                      onChange={(e) => setTempLinkInput(e.target.value)}
-                      style={{ flex: 1, padding: '6px 8px', fontSize: '12px', borderRadius: '4px', border: '1px solid #ccc' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddLink}
-                      style={{ padding: '6px 12px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
-                    >
-                      + Add Link
-                    </button>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {(stageDetails[activeStageTab]?.links || []).map((lnk, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', padding: '4px 8px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
-                        <a href={lnk} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', color: '#2563eb', textDecoration: 'underline', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '85%' }}>
-                          {lnk}
-                        </a>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveLink(idx)}
-                          style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
-                          title="Remove this link"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
+              )}
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
