@@ -5,7 +5,6 @@ import IssueList from './components/IssueList';
 import TagMapUpdates from './components/TagMap';
 import DashboardAnalytics from './components/DashboardAnalytics';
 
-// Profil default yang dipaparkan di skrin
 const DEFAULT_USER_PROFILE = {
   id: '00000000-0000-0000-0000-000000000000',
   department: 'ME',
@@ -18,7 +17,6 @@ export default function App() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [activeTab, setActiveTab] = useState('home');
 
-  // Pengesanan Orientasi Dinamik: Potret vs Landskap
   const checkIsPortrait = () => {
     return window.innerHeight > window.innerWidth || window.innerWidth <= 768;
   };
@@ -39,7 +37,6 @@ export default function App() {
     };
   }, []);
 
-  // Tangkap issueId daripada parameter URL dan navigasi terus ke list
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const targetIssueId = searchParams.get('issueId');
@@ -48,7 +45,6 @@ export default function App() {
     }
   }, []);
 
-  // URL Hash Navigation
   useEffect(() => {
     const handleHashChange = () => {
       const searchParams = new URLSearchParams(window.location.search);
@@ -97,7 +93,6 @@ export default function App() {
       {/* Top Navigation Bar */}
       <div className="top-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
-          {/* Logo / Label Sistem */}
           <span style={{ fontWeight: 'bold', color: '#0d3b66', fontSize: '15px' }}>
             ⚙️ Proton Tracking System
           </span>
@@ -118,46 +113,49 @@ export default function App() {
       {/* Main Content View */}
       {activeTab === 'home' && (
         <div className={`dashboard-grid ${isPortrait ? 'portrait-layout' : 'landscape-layout'}`}>
-          <div className="hero-card">
-            <div className="hero-title">
-              <h1 style={{ letterSpacing: '4px', marginBottom: '12px', fontSize: '28px' }}>R.A.Z.I.N</h1>
+          <div className="hero-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between' }}>
+            
+            {/* Header Akronim Center */}
+            <div className="hero-title" style={{ textAlign: 'center', width: '100%' }}>
+              <h1 style={{ letterSpacing: '4px', marginBottom: '14px', fontSize: '28px', textAlign: 'center' }}>
+                R.A.Z.I.N
+              </h1>
               
-              {/* Susunan Huruf Akronim Tebal & Besar */}
               <div 
                 style={{ 
-                  display: 'flex', 
+                  display: 'inline-flex', 
                   flexDirection: 'column', 
-                  gap: '4px', 
+                  gap: '6px', 
                   textAlign: 'left',
                   margin: '0 auto',
-                  maxWidth: '220px',
                   color: '#ffffff'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                  <span style={{ fontSize: '22px', fontWeight: '900', width: '22px', display: 'inline-block' }}>R</span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                  <span style={{ fontSize: '22px', fontWeight: '900', width: '22px', textAlign: 'center', display: 'inline-block' }}>R</span>
                   <span style={{ fontSize: '15px', fontWeight: '600' }}>oot Cause</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                  <span style={{ fontSize: '22px', fontWeight: '900', width: '22px', display: 'inline-block' }}>A</span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                  <span style={{ fontSize: '22px', fontWeight: '900', width: '22px', textAlign: 'center', display: 'inline-block' }}>A</span>
                   <span style={{ fontSize: '15px', fontWeight: '600' }}>nalysis</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                  <span style={{ fontSize: '22px', fontWeight: '900', width: '22px', display: 'inline-block' }}>Z</span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                  <span style={{ fontSize: '22px', fontWeight: '900', width: '22px', textAlign: 'center', display: 'inline-block' }}>Z</span>
                   <span style={{ fontSize: '15px', fontWeight: '600' }}>ero</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                  <span style={{ fontSize: '22px', fontWeight: '900', width: '22px', display: 'inline-block' }}>I</span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                  <span style={{ fontSize: '22px', fontWeight: '900', width: '22px', textAlign: 'center', display: 'inline-block' }}>I</span>
                   <span style={{ fontSize: '15px', fontWeight: '600' }}>ssue Resolution</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                  <span style={{ fontSize: '22px', fontWeight: '900', width: '22px', display: 'inline-block' }}>N</span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                  <span style={{ fontSize: '22px', fontWeight: '900', width: '22px', textAlign: 'center', display: 'inline-block' }}>N</span>
                   <span style={{ fontSize: '15px', fontWeight: '600' }}>etwork</span>
                 </div>
               </div>
             </div>
 
-            <div className="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '16px' }}>
+            {/* Profile Proton */}
+            <div className="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '18px', width: '100%', justifyContent: 'center' }}>
               <div 
                 className="avatar" 
                 style={{ 
@@ -176,7 +174,7 @@ export default function App() {
                 <span style={{ fontSize: '32px' }}>👤</span>
               </div>
 
-              <div className="welcome-text">
+              <div className="welcome-text" style={{ textAlign: 'left' }}>
                 <div className="welcome-title">Welcome to</div>
                 <div className="user-name" style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff' }}>
                   {DEFAULT_USER_PROFILE.full_name}
