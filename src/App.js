@@ -154,8 +154,20 @@ export default function App() {
               </div>
             </div>
 
-            {/* Profile Proton */}
-            <div className="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '18px', width: '100%', justifyContent: 'center' }}>
+            {/* Profile Proton (Center) */}
+            <div 
+              className="user-profile" 
+              style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: '10px', 
+                marginTop: '20px', 
+                width: '100%', 
+                textAlign: 'center' 
+              }}
+            >
               <div 
                 className="avatar" 
                 style={{ 
@@ -168,22 +180,23 @@ export default function App() {
                   alignItems: 'center', 
                   justifyContent: 'center', 
                   border: '2px solid rgba(255,255,255,0.6)', 
-                  flexShrink: 0 
+                  margin: '0 auto'
                 }}
               >
                 <span style={{ fontSize: '32px' }}>👤</span>
               </div>
 
-              <div className="welcome-text" style={{ textAlign: 'left' }}>
-                <div className="welcome-title">Welcome to</div>
-                <div className="user-name" style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff' }}>
+              <div className="welcome-text" style={{ textAlign: 'center', width: '100%' }}>
+                <div className="welcome-title" style={{ textAlign: 'center' }}>Welcome to</div>
+                <div className="user-name" style={{ fontSize: '22px', fontWeight: 'bold', color: '#fff', textAlign: 'center' }}>
                   {DEFAULT_USER_PROFILE.full_name}
                 </div>
-                <div className="staff-id-text" style={{ fontSize: '13px', color: '#cbd5e1' }}>
+                <div className="staff-id-text" style={{ fontSize: '13px', color: '#cbd5e1', textAlign: 'center' }}>
                   ({DEFAULT_USER_PROFILE.staff_id})
                 </div>
               </div>
             </div>
+
           </div>
 
           <div className="menu-card card-list" onClick={() => navigateTo('list')}>
