@@ -120,24 +120,41 @@ export default function App() {
         <div className={`dashboard-grid ${isPortrait ? 'portrait-layout' : 'landscape-layout'}`}>
           <div className="hero-card">
             <div className="hero-title">
-              <h1 style={{ letterSpacing: '3px', marginBottom: '8px' }}>R.A.Z.I.N</h1>
+              <h1 style={{ letterSpacing: '4px', marginBottom: '14px', fontSize: '26px' }}>R.A.Z.I.N</h1>
+              
+              {/* Susunan Akronim Sebaris & Highlight Huruf Awal */}
               <div 
                 style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '4px', 
                   fontSize: '13px', 
-                  fontWeight: 'bold', 
-                  lineHeight: '1.6', 
-                  color: '#f8fafc',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '2px',
-                  marginTop: '6px'
+                  fontWeight: 'bold',
+                  textAlign: 'left',
+                  margin: '0 auto',
+                  maxWidth: '220px'
                 }}
               >
-                <div>Root Cause</div>
-                <div>Analysis</div>
-                <div>Zero</div>
-                <div>Issue Resolution</div>
-                <div>Network</div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span style={{ color: '#facc15', fontSize: '17px', width: '22px', fontWeight: '900', textShadow: '0 0 6px rgba(250, 204, 21, 0.6)' }}>R</span>
+                  <span style={{ color: '#ffffff', letterSpacing: '0.5px' }}>oot Cause</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span style={{ color: '#facc15', fontSize: '17px', width: '22px', fontWeight: '900', textShadow: '0 0 6px rgba(250, 204, 21, 0.6)' }}>A</span>
+                  <span style={{ color: '#ffffff', letterSpacing: '0.5px' }}>nalysis</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span style={{ color: '#facc15', fontSize: '17px', width: '22px', fontWeight: '900', textShadow: '0 0 6px rgba(250, 204, 21, 0.6)' }}>Z</span>
+                  <span style={{ color: '#ffffff', letterSpacing: '0.5px' }}>ero</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span style={{ color: '#facc15', fontSize: '17px', width: '22px', fontWeight: '900', textShadow: '0 0 6px rgba(250, 204, 21, 0.6)' }}>I</span>
+                  <span style={{ color: '#ffffff', letterSpacing: '0.5px' }}>ssue Resolution</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span style={{ color: '#facc15', fontSize: '17px', width: '22px', fontWeight: '900', textShadow: '0 0 6px rgba(250, 204, 21, 0.6)' }}>N</span>
+                  <span style={{ color: '#ffffff', letterSpacing: '0.5px' }}>etwork</span>
+                </div>
               </div>
             </div>
 
